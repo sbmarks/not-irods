@@ -29,7 +29,7 @@ do
         # log file name
         logfile=$LOG_DIR/notireg.$(date +%Y%m%d)
         #just checking
-        echo "bag from $src to $tgt"
+        #echo "bag from $src to $tgt"
         #bag and move to scratch space
         mkdir $SCRATCH_DIR/$i
         $BAGIT_DIR/bag create $SCRATCH_DIR/$i $src
