@@ -14,7 +14,8 @@ BAGIT_DIR=/usr/local/bagit/bin
 LOG_DIR=/var/log/notirods
 
 
-for i in $( ls $SOURCE_DIR );
+#for i in $( ls $SOURCE_DIR );
+for i in 756 622 9885
 do
         timestamp=$(date +%Y%m%d%H%M%S)
         # source directory to be used in this iteration
@@ -30,26 +31,19 @@ do
         #just checking
         echo "bag from $src to $tgt"
         #bag and move to scratch space
+        mkdir $SCRATCH_DIR/$i
         $BAGIT_DIR/bag create $SCRATCH_DIR/$i $src
         #if $current exists
-        if [ -f $current ]; then
+        if [ -L $current ]; then
                 #we know there's a previous verison. is it the same as the one we have?
-                #generate checksum for scratch bag
-                scratch_sum=$( tar -cf - $scratch | md5sum )
-                #generate checksum for current bag
-                #sloppy, sorry not sure how to do this right atm
-                #could use md5deep but trying not to introduce dependencies
-                md5fullpath=$( readlink -f $current )
-                current_sum=$( tar -cf - $md5fullpath | md5sum )
-                #if scratch_sum equals current_sum
-                if [ $scratch_sum == $current_sum ]; then
+                #if scratch equals current
+                if diff -qr $current $scratch ; then
                         #the data hasn't changed.
                         #log that it hasn't been updated
                         echo `date`" [MATCH] bag $current is up to date." >> $logfile
                         #delete scratch version
-                        rm -f $scratch
+                        rm -rf $scratch
                         #end
-                        exit
                 else
                         #the data has changed. save the new bag and make it current.
                         #move the scratch version to its home in storage
@@ -57,18 +51,18 @@ do
                         #remove the current pointer
                         rm $current
                         #and recreate it pointing at the new version
-                        ln -s $tgt $current
+                        ln -s $tgt $DEST_DIR/$i/current
                         #log that it has been updated.
                         echo `date`" [UPDATE] bag $tgt is now current" >> $logfile
-                        exit
                 fi
         else
                 #it is new content. move it to storage and make it current.
+		#make parent directory
+		mkdir $DEST_DIR/$i
                 #move $scratch to $tgt
                 mv $scratch $tgt
                 #create the 'current' symlink to $tgt
                 ln -s $tgt $current
                 echo `date`" [NEW] bag $tgt is new content." >> $logfile
-                exit
         fi
 done
